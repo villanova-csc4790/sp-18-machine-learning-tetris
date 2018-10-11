@@ -3,6 +3,9 @@
 import tensorflow as tf
 import cv2
 import sys
+import os
+os.putenv('SDL_VIDEODRIVER', 'fbcon')
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 sys.path.append("Wrapped Game Code/")
 import pong_fun # whichever is imported "as game" will be used
 import dummy_game
@@ -15,12 +18,14 @@ GAME = 'tetris' # the name of the game being played for log files
 ACTIONS = 6 # number of valid actions
 GAMMA = 0.99 # decay rate of past observations
 OBSERVE = 500. # timesteps to observe before training
-EXPLORE = 500. # frames over which to anneal epsilon
-FINAL_EPSILON = 0.05 # final value of epsilon
+EXPLORE = 5000. # frames over which to anneal epsilon
+FINAL_EPSILON = 0.1 # final value of epsilon
 INITIAL_EPSILON = 1.0 # starting value of epsilon
 REPLAY_MEMORY = 590000 # number of previous transitions to remember
 BATCH = 32 # size of minibatch
 K = 1 # only select an action every Kth frame, repeat prev for others
+
+
 
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev = 0.01)

@@ -2,8 +2,11 @@
 # http://inventwithpython.com/pygame
 # Released under a "Simplified BSD" license
 
-import random, time, pygame, sys
+import random, time, pygame, sys, os
 from pygame.locals import *
+
+os.putenv('SDL_VIDEODRIVER', 'fbcon')
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 FPS = 25
 WINDOWWIDTH = 640
@@ -12,6 +15,8 @@ BOXSIZE = 20
 BOARDWIDTH = 10
 BOARDHEIGHT = 20
 BLANK = '.'
+
+prevInput = [0,0,0,0,0,0]
 
 MOVESIDEWAYSFREQ = 0.15
 MOVEDOWNFREQ = 0.1
@@ -164,6 +169,8 @@ class GameState:
         BIGFONT = pygame.font.Font('freesansbold.ttf', 100)
         pygame.display.set_caption('Tetromino')
 
+
+
         # DEBUG
         self.total_lines = 0
         
@@ -207,10 +214,13 @@ class GameState:
         
         pygame.display.update()
 
-        
+
     def frame_step(self,input):
         self.movingLeft = False
         self.movingRight = False
+        global prevInput
+
+        move = int(0)
         
         reward = 0
         terminal = False
@@ -236,21 +246,25 @@ class GameState:
             self.movingLeft = True
             self.movingRight = False
             self.lastMoveSidewaysTime = time.time()
+            move = int(1)
 
         elif (input[3] == 1) and self.isValidPosition(adjX=1):
             self.fallingPiece['x'] += 1
             self.movingRight = True
             self.movingLeft = False
             self.lastMoveSidewaysTime = time.time()
+            move = int(3)
 
         # rotating the piece (if there is room to rotate)
         elif (input[2] == 1):
             self.fallingPiece['rotation'] = (self.fallingPiece['rotation'] + 1) % len(PIECES[self.fallingPiece['shape']])
+            move = int(2)
             if not self.isValidPosition():
                 self.fallingPiece['rotation'] = (self.fallingPiece['rotation'] - 1) % len(PIECES[self.fallingPiece['shape']])
 
         elif (input[5] == 1): # rotate the other direction
             self.fallingPiece['rotation'] = (self.fallingPiece['rotation'] - 1) % len(PIECES[self.fallingPiece['shape']])
+            move = int(5)
             if not self.isValidPosition():
                 self.fallingPiece['rotation'] = (self.fallingPiece['rotation'] + 1) % len(PIECES[self.fallingPiece['shape']])
 
@@ -259,6 +273,7 @@ class GameState:
             self.movingDown = False
             self.movingLeft = False
             self.movingRight = False
+            move = int(4)
             for i in range(1, BOARDHEIGHT):
                 if not self.isValidPosition(adjY=i):
                     break
@@ -287,12 +302,16 @@ class GameState:
             if cleared > 0:
                 if cleared == 1:
                     self.score += 40 * self.level
+                    reward += 40
                 elif cleared == 2:
                     self.score += 100 * self.level
+                    reward += 100
                 elif cleared == 3:
                     self.score += 300 * self.level
+                    reward += 300
                 elif cleared == 4:
                     self.score += 1200 * self.level
+                    reward += 1200
 
             self.score += self.fallingPiece['y']
 
@@ -317,7 +336,22 @@ class GameState:
         if self.fallingPiece != None:
            self.drawPiece(self.fallingPiece)
 
+        index = 0
+        index2 = 0
         pygame.display.update()
+        if 1 in prevInput:
+            for i in prevInput:
+                index += 1
+                if i == 1:
+                    break;
+            for i in input:
+                index2 += 1
+                if i == 1:
+                    break
+            if index == index2:
+                reward -= 1
+
+        prevInput = input
 
         if cleared > 0:
             reward = 100 * cleared
