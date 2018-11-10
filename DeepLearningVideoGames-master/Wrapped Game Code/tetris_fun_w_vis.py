@@ -215,14 +215,6 @@ class GameState:
         
         pygame.display.update()
 
-        def aggregateHeight(self):
-            #Count total blocks that are not blank
-            filled = 0
-            for x in range(BOARDWIDTH):
-                for y in range(BOARDHEIGHT):
-                    if not (self.board[x][y] == BLANK):
-                        filled = filled + 1
-            return filled
 
 
     def frame_step(self,input):
@@ -360,13 +352,13 @@ class GameState:
                     break
             if index == index2:
                 reward -= 1
-        height = self.aggregateHeight(self)
-        aggHeight.append(self.aggregateHeight(self))
+        height = self.aggregateHeight()
+        aggHeight.append(self.aggregateHeight())
         print(aggHeight)
         avgHeight = sum(aggHeight) / len(aggHeight)
 
         if height < avgHeight:
-            reward = reward + 0.25
+            reward = reward + 1
         prevInput = input
 
         if cleared > 0:
@@ -467,6 +459,16 @@ class GameState:
             if self.board[x][y] == BLANK:
                 return False
         return True
+
+
+    def aggregateHeight(self):
+            #Count total blocks that are not blank
+            filled = 0
+            for x in range(BOARDWIDTH):
+                for y in range(BOARDHEIGHT):
+                    if not (self.board[x][y] == BLANK):
+                        filled = filled + 1
+            return filled
 
 
     def removeCompleteLines(self):
