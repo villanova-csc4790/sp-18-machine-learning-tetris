@@ -174,7 +174,7 @@ class GameState:
 
         # DEBUG
         self.total_lines = 0
-        
+
         # setup variables for the start of the game
         self.board = self.getBlankBoard()
         self.lastMoveDownTime = time.time()
@@ -192,7 +192,7 @@ class GameState:
         self.nextPiece = self.getNewPiece()
 
         self.frame_step([1,0,0,0,0,0])
-        
+
         pygame.display.update()
 
     def reinit(self):
@@ -208,36 +208,39 @@ class GameState:
         self.height = 0
         self.level, self.fallFreq = self.calculateLevelAndFallFreq()
 
+        aggHeight.clear()
+
         self.fallingPiece = self.getNewPiece()
         self.nextPiece = self.getNewPiece()
 
         self.frame_step([1,0,0,0,0,0])
-        
+
         pygame.display.update()
+
 
 
 
     def frame_step(self,input):
         self.movingLeft = False
         self.movingRight = False
-        global prevInput
 
+        global prevInput
         move = int(0)
-        
+
         reward = 0
         terminal = False
-        
+
         #none is 100000, left is 010000, up is 001000, right is 000100, space is 000010, q is 000001
         if self.fallingPiece == None:
             # No falling piece in play, so start a new piece at the top
             self.fallingPiece = self.nextPiece
             self.nextPiece = self.getNewPiece()
             self.lastFallTime = time.time() # reset self.lastFallTime
-            
+
             if not self.isValidPosition():
                 image_data = pygame.surfarray.array3d(pygame.display.get_surface())
                 terminal = True
-                
+
                 self.reinit()
                 return image_data, reward, terminal # can't fit a new piece on the self.board, so game over
 
@@ -325,6 +328,14 @@ class GameState:
 
             self.level, self.fallFreq = self.calculateLevelAndFallFreq()
             self.fallingPiece = None
+            height = self.aggregateHeight()
+            aggHeight.append(height)
+            print(aggHeight)
+            print(sum(aggHeight))
+            avgHeight = sum(aggHeight) / len(aggHeight)
+
+            if height < avgHeight:
+                reward = reward + 1
 
         else:
             # piece did not land, just move the piece down
@@ -341,6 +352,7 @@ class GameState:
         index = 0
         index2 = 0
         pygame.display.update()
+
         if 1 in prevInput:
             for i in prevInput:
                 index += 1
@@ -352,14 +364,9 @@ class GameState:
                     break
             if index == index2:
                 reward -= 1
-        height = self.aggregateHeight()
-        aggHeight.append(self.aggregateHeight())
-        print(aggHeight)
-        avgHeight = sum(aggHeight) / len(aggHeight)
 
-        if height < avgHeight:
-            reward = reward + 1
         prevInput = input
+
 
         if cleared > 0:
             reward = 100 * cleared
@@ -379,6 +386,19 @@ class GameState:
                 break
         return stack_height
 
+    def aggregateHeight(self):
+            #Count total blocks that are not blank
+            # filled = 0
+            height = 0
+            for x in range(0, BOARDWIDTH):
+                index = 0
+                for y in range(0, BOARDHEIGHT):
+                    if self.board[x][y] != '.':
+                        index = BOARDHEIGHT - y
+                height = height + index
+            return height
+
+
     def getReward(self):
         stack_height = None
         num_blocks = 0
@@ -390,7 +410,7 @@ class GameState:
                     blank_row = False
             if not blank_row and stack_height is None:
                 stack_height = BOARDHEIGHT - i
-                    
+
         if stack_height is None:
             return BOARDHEIGHT
         else:
@@ -459,16 +479,6 @@ class GameState:
             if self.board[x][y] == BLANK:
                 return False
         return True
-
-
-    def aggregateHeight(self):
-            #Count total blocks that are not blank
-            filled = 0
-            for x in range(BOARDWIDTH):
-                for y in range(BOARDHEIGHT):
-                    if not (self.board[x][y] == BLANK):
-                        filled = filled + 1
-            return filled
 
 
     def removeCompleteLines(self):

@@ -5,8 +5,8 @@
 import random, time, pygame, sys, os
 from pygame.locals import *
 
-#os.putenv('SDL_VIDEODRIVER', 'fbcon')
-#os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.putenv('SDL_VIDEODRIVER', 'fbcon')
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 FPS = 25
 WINDOWWIDTH = 640
@@ -18,6 +18,7 @@ BLANK = '.'
 
 prevInput = [0,0,0,0,0,0]
 aggHeight = []
+moveCounter = 0
 
 MOVESIDEWAYSFREQ = 0.15
 MOVEDOWNFREQ = 0.1
@@ -208,6 +209,8 @@ class GameState:
         self.height = 0
         self.level, self.fallFreq = self.calculateLevelAndFallFreq()
 
+        aggHeight.clear()
+
         self.fallingPiece = self.getNewPiece()
         self.nextPiece = self.getNewPiece()
 
@@ -215,21 +218,14 @@ class GameState:
         
         pygame.display.update()
 
-        def aggregateHeight(self):
-            #Count total blocks that are not blank
-            filled = 0
-            for x in range(BOARDWIDTH):
-                for y in range(BOARDHEIGHT):
-                    if not (self.board[x][y] == BLANK):
-                        filled = filled + 1
-            return filled
+
 
 
     def frame_step(self,input):
         self.movingLeft = False
         self.movingRight = False
-        global prevInput
 
+        global prevInput
         move = int(0)
         
         reward = 0
@@ -245,6 +241,8 @@ class GameState:
             if not self.isValidPosition():
                 image_data = pygame.surfarray.array3d(pygame.display.get_surface())
                 terminal = True
+
+                reward = reward - 2
                 
                 self.reinit()
                 return image_data, reward, terminal # can't fit a new piece on the self.board, so game over
@@ -333,6 +331,12 @@ class GameState:
 
             self.level, self.fallFreq = self.calculateLevelAndFallFreq()
             self.fallingPiece = None
+            height = self.aggregateHeight()
+            aggHeight.append(height)
+            avgHeight = sum(aggHeight) / len(aggHeight)
+
+            if height < avgHeight:
+                reward = reward + 1
 
         else:
             # piece did not land, just move the piece down
@@ -349,6 +353,7 @@ class GameState:
         index = 0
         index2 = 0
         pygame.display.update()
+
         if 1 in prevInput:
             for i in prevInput:
                 index += 1
@@ -360,14 +365,9 @@ class GameState:
                     break
             if index == index2:
                 reward -= 1
-        height = self.aggregateHeight(self)
-        aggHeight.append(self.aggregateHeight(self))
-        print(aggHeight)
-        avgHeight = sum(aggHeight) / len(aggHeight)
 
-        if height < avgHeight:
-            reward = reward + 0.25
         prevInput = input
+
 
         if cleared > 0:
             reward = 100 * cleared
@@ -386,6 +386,19 @@ class GameState:
                 stack_height = BOARDHEIGHT - i
                 break
         return stack_height
+
+    def aggregateHeight(self):
+            #Count total blocks that are not blank
+            # filled = 0
+            height = 0
+            for x in range(0, BOARDWIDTH):
+                index = 0
+                for y in range(0, BOARDHEIGHT):
+                    if self.board[x][y] != '.':
+                        index = BOARDHEIGHT - y
+                height = height + index
+            return height
+
 
     def getReward(self):
         stack_height = None

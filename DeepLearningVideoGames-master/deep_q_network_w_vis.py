@@ -3,13 +3,13 @@
 import tensorflow as tf
 import cv2
 import sys
-import os
-os.putenv('SDL_VIDEODRIVER', 'fbcon')
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+#import os
+#os.putenv('SDL_VIDEODRIVER', 'fbcon')
+#os.environ["SDL_VIDEODRIVER"] = "dummy"
 sys.path.append("Wrapped Game Code/")
 #import pong_fun # whichever is imported "as game" will be used
 #import dummy_game
-import tetris_fun as game
+import tetris_fun_w_vis as game
 import random
 import numpy as np
 from collections import deque
