@@ -4,8 +4,8 @@ import tensorflow as tf
 import cv2
 import sys
 import os
-os.putenv('SDL_VIDEODRIVER', 'fbcon')
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+#os.putenv('SDL_VIDEODRIVER', 'fbcon')
+#os.environ["SDL_VIDEODRIVER"] = "dummy"
 sys.path.append("Wrapped Game Code/")
 #import pong_fun # whichever is imported "as game" will be used
 #import dummy_game
@@ -17,7 +17,7 @@ from collections import deque
 GAME = 'tetris' # the name of the game being played for log files
 ACTIONS = 6 # number of valid actions
 GAMMA = 0.99 # decay rate of past observations
-OBSERVE = 5000. # timesteps to observe before training
+OBSERVE = 30000. # timesteps to observe before training
 EXPLORE = 10000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.05 # final value of epsilon
 INITIAL_EPSILON = 1.0 # starting value of epsilon
@@ -111,8 +111,9 @@ def trainNetwork(s, readout, h_fc1, sess):
     saver = tf.train.Saver()
     sess.run(tf.global_variables_initializer())
     checkpoint = tf.train.get_checkpoint_state("saved_networks")
+    #print(checkpoint)
     if checkpoint and checkpoint.model_checkpoint_path:
-        saver.restore(sess, checkpoint.model_checkpoint_path)
+        #saver.restore(sess, checkpoint.model_checkpoint_path)
         print ("Successfully loaded:", checkpoint.model_checkpoint_path)
     else:
         print ("Could not find old network weights")

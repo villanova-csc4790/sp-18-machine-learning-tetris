@@ -18,6 +18,7 @@ BLANK = '.'
 
 prevInput = [0,0,0,0,0,0]
 aggHeight = []
+moveCounter = 0
 
 MOVESIDEWAYSFREQ = 0.15
 MOVEDOWNFREQ = 0.1
@@ -241,6 +242,8 @@ class GameState:
                 image_data = pygame.surfarray.array3d(pygame.display.get_surface())
                 terminal = True
 
+                reward = reward - 20
+
                 self.reinit()
                 return image_data, reward, terminal # can't fit a new piece on the self.board, so game over
 
@@ -320,22 +323,25 @@ class GameState:
 
             self.score += self.fallingPiece['y']
 
+            if not self.bumpiness() == 0:
+                reward += 10 / self.bumpiness()
+            else:
+                reward += 10
+
+            print(self.countHoles())
+            if not self.countHoles() == 0:
+                reward += 5 / self.countHoles()
+            else:
+                reward += 5
+
             self.lines += cleared
             self.total_lines += cleared
 
-            reward = self.height - self.getHeight()
+            # reward = self.height - self.getHeight()
             self.height = self.getHeight()
 
             self.level, self.fallFreq = self.calculateLevelAndFallFreq()
             self.fallingPiece = None
-            height = self.aggregateHeight()
-            aggHeight.append(height)
-            print(aggHeight)
-            print(sum(aggHeight))
-            avgHeight = sum(aggHeight) / len(aggHeight)
-
-            if height < avgHeight:
-                reward = reward + 1
 
         else:
             # piece did not land, just move the piece down
@@ -353,19 +359,24 @@ class GameState:
         index2 = 0
         pygame.display.update()
 
-        if 1 in prevInput:
-            for i in prevInput:
-                index += 1
-                if i == 1:
-                    break;
-            for i in input:
-                index2 += 1
-                if i == 1:
-                    break
-            if index == index2:
-                reward -= 1
+        # if 1 in prevInput:
+        #     for i in prevInput:
+        #         index += 1
+        #         if i == 1:
+        #             break;
+        #     for i in input:
+        #         index2 += 1
+        #         if i == 1:
+        #             break
+        #     if index == index2:
+        #         reward -= 0.2
+        #
+        # prevInput = input
 
-        prevInput = input
+        #print(self.getReward())
+        #reward += self.getReward()
+
+
 
 
         if cleared > 0:
@@ -386,17 +397,45 @@ class GameState:
                 break
         return stack_height
 
-    def aggregateHeight(self):
-            #Count total blocks that are not blank
-            # filled = 0
-            height = 0
-            for x in range(0, BOARDWIDTH):
-                index = 0
-                for y in range(0, BOARDHEIGHT):
-                    if self.board[x][y] != '.':
-                        index = BOARDHEIGHT - y
-                height = height + index
-            return height
+    def countHoles(self):
+        #Count holes in board
+        holes = 0
+        for x in range(0, BOARDWIDTH):
+            for y in range(BOARDHEIGHT-1, 0, -1):
+                if self.board[x][y] == '.' and self.board[x][y-1] != '.':
+                    holes += 1
+        return holes
+
+
+
+    def bumpiness(self):
+        col1_height = 0
+        col2_height = 0
+        differences = 0
+
+        for x in range(0, BOARDWIDTH - 1):
+            col1_height = 0
+            col2_height = 0
+            index = 0
+            index2 = 0
+            diff = 0
+            for y in range(BOARDHEIGHT-1, 0, -1):
+                if self.board[x][y] != '.':
+                    index = y
+                if self.board[x+1][y] != '.':
+                    index2 = y
+            if index != 0:
+                col1_height = BOARDHEIGHT - index
+            else:
+                col1_height = 0
+            if index2 != 0:
+                col2_height = BOARDHEIGHT - index2
+            else:
+                col2_height = 0
+            diff = abs(col1_height - col2_height)
+            differences += diff
+
+        return differences
 
 
     def getReward(self):
@@ -412,9 +451,9 @@ class GameState:
                 stack_height = BOARDHEIGHT - i
 
         if stack_height is None:
-            return BOARDHEIGHT
+            return 0
         else:
-            return BOARDHEIGHT - stack_height
+            #return BOARDHEIGHT - stack_height
             return float(num_blocks) / float(stack_height * BOARDWIDTH)
 
 
