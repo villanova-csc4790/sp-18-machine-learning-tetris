@@ -224,9 +224,6 @@ class GameState:
     def frame_step(self,input):
         self.movingLeft = False
         self.movingRight = False
-
-        global prevInput
-        move = int(0)
         
         reward = 0
         terminal = False
@@ -254,25 +251,21 @@ class GameState:
             self.movingLeft = True
             self.movingRight = False
             self.lastMoveSidewaysTime = time.time()
-            move = int(1)
 
         elif (input[3] == 1) and self.isValidPosition(adjX=1):
             self.fallingPiece['x'] += 1
             self.movingRight = True
             self.movingLeft = False
             self.lastMoveSidewaysTime = time.time()
-            move = int(3)
 
         # rotating the piece (if there is room to rotate)
         elif (input[2] == 1):
             self.fallingPiece['rotation'] = (self.fallingPiece['rotation'] + 1) % len(PIECES[self.fallingPiece['shape']])
-            move = int(2)
             if not self.isValidPosition():
                 self.fallingPiece['rotation'] = (self.fallingPiece['rotation'] - 1) % len(PIECES[self.fallingPiece['shape']])
 
         elif (input[5] == 1): # rotate the other direction
             self.fallingPiece['rotation'] = (self.fallingPiece['rotation'] - 1) % len(PIECES[self.fallingPiece['shape']])
-            move = int(5)
             if not self.isValidPosition():
                 self.fallingPiece['rotation'] = (self.fallingPiece['rotation'] + 1) % len(PIECES[self.fallingPiece['shape']])
 
@@ -281,7 +274,6 @@ class GameState:
             self.movingDown = False
             self.movingLeft = False
             self.movingRight = False
-            move = int(4)
             for i in range(1, BOARDHEIGHT):
                 if not self.isValidPosition(adjY=i):
                     break
@@ -310,35 +302,41 @@ class GameState:
             if cleared > 0:
                 if cleared == 1:
                     self.score += 40 * self.level
-                    reward += 80
+                    reward += 40
                 elif cleared == 2:
                     self.score += 100 * self.level
-                    reward += 200
+                    reward += 100
                 elif cleared == 3:
                     self.score += 300 * self.level
-                    reward += 600
+                    reward += 300
                 elif cleared == 4:
                     self.score += 1200 * self.level
-                    reward += 2400
+                    reward += 1200
 
-            self.score += self.fallingPiece['y']
-
+            # print(self.fallingPiece['y'])
+            # self.score += self.fallingPiece['y']
+            #
+            #
+            # # Reinforcement learning upper-bounding strategies
+            #
             if not self.bumpiness() == 0:
-                reward += 10 / self.bumpiness()
+                reward += 1 / self.bumpiness()
             else:
-                reward += 10
+                reward += 3
+            #
+            # #print(self.countHoles())
+            # if not self.countHoles() == 0:
+            #     reward += 3 / self.countHoles()
+            # else:
+            #     reward += 3
+            #
+            # #print(self.aggregateHeight())
+            # if not self.aggregateHeight() == 0:
+            #     reward += 3 / self.aggregateHeight()
+            # else:
+            #     reward += 3
 
-            #print(self.countHoles())
-            if not self.countHoles() == 0:
-                reward += 5 / self.countHoles()
-            else:
-                reward += 5
-
-            #print(self.aggregateHeight())
-            if not self.aggregateHeight() == 0:
-                reward += 5 / self.aggregateHeight()
-            else:
-                reward += 5
+            reward += self.score
 
             self.lines += cleared
             self.total_lines += cleared
@@ -361,29 +359,10 @@ class GameState:
         if self.fallingPiece != None:
            self.drawPiece(self.fallingPiece)
 
-        index = 0
-        index2 = 0
         pygame.display.update()
 
-        if 1 in prevInput:
-            for i in prevInput:
-                index += 1
-                if i == 1:
-                    break;
-            for i in input:
-                index2 += 1
-                if i == 1:
-                    break
-            if index == index2:
-                reward -= 0.2
-
-        prevInput = input
-
-        #print(self.getReward())
-        #reward += self.getReward()
-
         if cleared > 0:
-            reward = 100 * cleared
+            reward += 100 * cleared
 
         image_data = pygame.surfarray.array3d(pygame.display.get_surface())
         return image_data, reward, terminal
@@ -467,7 +446,7 @@ class GameState:
         if stack_height is None:
             return 0
         else:
-            #return BOARDHEIGHT - stack_height
+            return BOARDHEIGHT - stack_height
             return float(num_blocks) / float(stack_height * BOARDWIDTH)
 
 

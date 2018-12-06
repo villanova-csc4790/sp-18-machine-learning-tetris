@@ -18,7 +18,7 @@ GAME = 'tetris' # the name of the game being played for log files
 ACTIONS = 6 # number of valid actions
 GAMMA = 0.99 # decay rate of past observations
 OBSERVE = 30000. # timesteps to observe before training
-EXPLORE = 10000. # frames over which to anneal epsilon
+EXPLORE = 5000. # frames over which to anneal epsilon
 FINAL_EPSILON = 0.05 # final value of epsilon
 INITIAL_EPSILON = 1.0 # starting value of epsilon
 REPLAY_MEMORY = 590000 # number of previous transitions to remember
@@ -113,7 +113,7 @@ def trainNetwork(s, readout, h_fc1, sess):
     checkpoint = tf.train.get_checkpoint_state("saved_networks")
     #print(checkpoint)
     if checkpoint and checkpoint.model_checkpoint_path:
-        #saver.restore(sess, checkpoint.model_checkpoint_path)
+        saver.restore(sess, checkpoint.model_checkpoint_path)
         print ("Successfully loaded:", checkpoint.model_checkpoint_path)
     else:
         print ("Could not find old network weights")

@@ -321,19 +321,19 @@ class GameState:
                     self.score += 1200 * self.level
                     reward += 1200
 
-            self.score += self.fallingPiece['y']
 
-            if not self.bumpiness() == 0:
-                reward += 10 / self.bumpiness()
-            else:
-                reward += 10
+            # if not self.bumpiness() == 0:
+            #     reward += 10 / self.bumpiness()
+            # else:
+            #     reward += 10
+            #
+            # print(self.countHoles())
+            # if not self.countHoles() == 0:
+            #     reward += 5 / self.countHoles()
+            # else:
+            #     reward += 5
 
-            print(self.countHoles())
-            if not self.countHoles() == 0:
-                reward += 5 / self.countHoles()
-            else:
-                reward += 5
-
+            reward += self.score
             self.lines += cleared
             self.total_lines += cleared
 
